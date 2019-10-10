@@ -21,8 +21,8 @@ Frameworks - Packages - Patterns - Features used
 <li>Entity Framework Core</li>
 <li>Entity Framework Migrations - Code First</li>
 <li>Repository pattern</li>
-<li><stroke>FluentValidation</stroke> (Updated to use IValidatableObject)</li>
-<li><stroke>Automapper</stroke> (Removed ViewModel objects)</li>
+<li><strike>FluentValidation</strike> (Updated to use IValidatableObject)</li>
+<li><strike>Automapper</strike> (Removed ViewModel objects)</li>
 <li>Global exception handler</li>
 <li>Cors</li>
 </ul>
