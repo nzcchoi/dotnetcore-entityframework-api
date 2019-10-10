@@ -11,8 +11,6 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Newtonsoft.Json.Serialization;
-using Scheduler.API.Core;
-using Scheduler.API.ViewModels.Mappings;
 using Scheduler.Data;
 using Scheduler.Data.Abstract;
 using Scheduler.Data.Repositories;
@@ -43,7 +41,6 @@ namespace Scheduler.API
                 // For more details on using the user secret store see http://go.microsoft.com/fwlink/?LinkID=532709
                 builder.AddUserSecrets<Startup>();
             }
-
             Configuration = builder.Build();
         }
 
@@ -57,7 +54,6 @@ namespace Scheduler.API
                 useInMemoryProvider = bool.Parse(Configuration["AppSettings:InMemoryProvider"]);
             }
             catch { }
-
             services.AddDbContext<SchedulerContext>(options => {
                 switch (useInMemoryProvider)
                 {
@@ -76,9 +72,6 @@ namespace Scheduler.API
             services.AddScoped<IScheduleRepository, ScheduleRepository>();
             services.AddScoped<IUserRepository, UserRepository>();
             services.AddScoped<IAttendeeRepository, AttendeeRepository>();
-
-            // Automapper Configuration
-            AutoMapperConfiguration.Configure();
 
             // Enable Cors
             services.AddCors();
@@ -114,7 +107,6 @@ namespace Scheduler.API
                             var error = context.Features.Get<IExceptionHandlerFeature>();
                             if (error != null)
                             {
-                                context.Response.AddApplicationError(error.Error.Message);
                                 await context.Response.WriteAsync(error.Error.Message).ConfigureAwait(false);
                             }
                         });

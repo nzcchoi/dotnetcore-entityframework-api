@@ -4,9 +4,6 @@ using System.Linq;
 using Microsoft.AspNetCore.Mvc;
 using Scheduler.Data.Abstract;
 using Scheduler.Model;
-using Scheduler.API.ViewModels;
-using AutoMapper;
-using Scheduler.API.Core;
 
 // For more information on enabling Web API for empty projects, visit http://go.microsoft.com/fwlink/?LinkID=397860
 
@@ -30,7 +27,7 @@ namespace Scheduler.API.Controllers
             _attendeeRepository = attendeeRepository;
         }
 
-        public IActionResult Get()
+        public IEnumerable<User> Get()
         {
             var pagination = Request.Headers["Pagination"];
 
@@ -46,97 +43,57 @@ namespace Scheduler.API.Controllers
             var totalUsers = _userRepository.Count();
             var totalPages = (int)Math.Ceiling((double)totalUsers / pageSize);
 
-            IEnumerable<User> _users = _userRepository
+            return _userRepository
                 .AllIncluding(u => u.SchedulesCreated)
                 .OrderBy(u => u.Id)
                 .Skip((currentPage - 1) * currentPageSize)
                 .Take(currentPageSize)
                 .ToList();
-
-            IEnumerable<UserViewModel> _usersVM = Mapper.Map<IEnumerable<User>, IEnumerable<UserViewModel>>(_users);
-
-            Response.AddPagination(page, pageSize, totalUsers, totalPages);
-
-            return new OkObjectResult(_usersVM);
         }
 
         [HttpGet("{id}", Name = "GetUser")]
-        public IActionResult Get(int id)
+        public User Get(int id)
         {
-            User _user = _userRepository.GetSingle(u => u.Id == id, u => u.SchedulesCreated);
-
-            if (_user != null)
-            {
-                UserViewModel _userVM = Mapper.Map<User, UserViewModel>(_user);
-                return new OkObjectResult(_userVM);
-            }
-            else
-            {
-                return NotFound();
-            }
+            return _userRepository.GetSingle(u => u.Id == id, u => u.SchedulesCreated);
         }
 
         [HttpGet("{id}/schedules", Name = "GetUserSchedules")]
-        public IActionResult GetSchedules(int id)
+        public IEnumerable<Schedule> GetSchedules(int id)
         {
-            IEnumerable<Schedule> _userSchedules = _scheduleRepository.FindBy(s => s.CreatorId == id);
-
-            if (_userSchedules != null)
-            {
-                IEnumerable<ScheduleViewModel> _userSchedulesVM = Mapper.Map<IEnumerable<Schedule>, IEnumerable<ScheduleViewModel>>(_userSchedules);
-                return new OkObjectResult(_userSchedulesVM);
-            }
-            else
-            {
-                return NotFound();
-            }
+            return _scheduleRepository.FindBy(s => s.CreatorId == id);
         }
-
         [HttpPost]
-        public IActionResult Create([FromBody]UserViewModel user)
+        public User Create([FromBody]User user)
         {
-
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
-
             User _newUser = new User { Name = user.Name, Profession = user.Profession, Avatar = user.Avatar };
 
             _userRepository.Add(_newUser);
             _userRepository.Commit();
-
-            user = Mapper.Map<User, UserViewModel>(_newUser);
-
-            CreatedAtRouteResult result = CreatedAtRoute("GetUser", new { controller = "Users", id = user.Id }, user);
-            return result;
+            return _newUser;
         }
 
         [HttpPut("{id}")]
-        public IActionResult Put(int id, [FromBody]UserViewModel user)
+        public User Put(int id, [FromBody]User user)
         {
             if (!ModelState.IsValid)
             {
-                return BadRequest(ModelState);
+                return null;
             }
 
-            User _userDb = _userRepository.GetSingle(id);
+            User userDb = _userRepository.GetSingle(id);
 
-            if (_userDb == null)
+            if (userDb == null)
             {
-                return NotFound();
+                throw new KeyNotFoundException();
             }
             else
             {
-                _userDb.Name = user.Name;
-                _userDb.Profession = user.Profession;
-                _userDb.Avatar = user.Avatar;
+                userDb.Name = user.Name;
+                userDb.Profession = user.Profession;
+                userDb.Avatar = user.Avatar;
                 _userRepository.Commit();
             }
-
-            user = Mapper.Map<User, UserViewModel>(_userDb);
-
-            return new NoContentResult();
+            return userDb;
         }
 
         [HttpDelete("{id}")]

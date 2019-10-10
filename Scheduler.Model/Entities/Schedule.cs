@@ -1,11 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Threading.Tasks;
 
 namespace Scheduler.Model
 {
-    public class Schedule : IEntityBase
+    public class Schedule : IEntityBase, IValidatableObject
     {
         public Schedule()
         {
@@ -26,5 +27,13 @@ namespace Scheduler.Model
         public User Creator { get; set; }
         public int CreatorId { get; set; }
         public ICollection<Attendee> Attendees { get; set; }
+
+        public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
+        {
+            if (TimeStart > TimeEnd)
+            {
+                yield return new ValidationResult($"Schedule's End time must be greater than Start time", new[] { "TimeEnd" });
+            }
+        }
     }
 }

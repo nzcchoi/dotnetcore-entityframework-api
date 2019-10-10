@@ -1,5 +1,18 @@
 # Building REST APIs using ASP.NET Core and Entity Framework Core
+
+## Simplified by Chris Choi
+### Removed 3rd party libraries, FluentValidation and Automapper
+### TODO:
+- Update to ASP.NET Core 3.0
+- Add UnitOfWork
+- Update error handling for model validation
+- Update readonly document to md stryle
+- Add change log document
+- Add database project
+
 [![License](https://img.shields.io/github/license/chsakell/dotnetcore-entityframework-api.svg)](https://github.com/chsakell/dotnetcore-entityframework-api/blob/master/licence) [![Build status](https://ci.appveyor.com/api/projects/status/github/chsakell/dotnetcore-entityframework-api?branch=master&svg=true)](https://ci.appveyor.com/project/chsakell/dotnetcore-entityframework-api/branch/master)
+
+
 
 <a href="http://wp.me/p3mRWu-18G" taget="_blank">Blog post</a><br/>
 Frameworks - Packages - Patterns - Features used
@@ -8,8 +21,8 @@ Frameworks - Packages - Patterns - Features used
 <li>Entity Framework Core</li>
 <li>Entity Framework Migrations - Code First</li>
 <li>Repository pattern</li>
-<li>FluentValidation</li>
-<li>Automapper</li>
+<li><stroke>FluentValidation</stroke> (Updated to use IValidatableObject)</li>
+<li><stroke>Automapper</stroke> (Removed ViewModel objects)</li>
 <li>Global exception handler</li>
 <li>Cors</li>
 </ul>

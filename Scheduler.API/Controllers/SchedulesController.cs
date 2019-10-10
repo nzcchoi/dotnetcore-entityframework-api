@@ -4,9 +4,6 @@ using System.Linq;
 using Microsoft.AspNetCore.Mvc;
 using Scheduler.Data.Abstract;
 using Scheduler.Model;
-using Scheduler.API.ViewModels;
-using AutoMapper;
-using Scheduler.API.Core;
 
 // For more information on enabling Web API for empty projects, visit http://go.microsoft.com/fwlink/?LinkID=397860
 
@@ -29,7 +26,7 @@ namespace Scheduler.API.Controllers
             _userRepository = userRepository;
         }
 
-        public IActionResult Get()
+        public IEnumerable<Schedule> Get()
         {
             var pagination = Request.Headers["Pagination"];
 
@@ -45,128 +42,79 @@ namespace Scheduler.API.Controllers
             var totalSchedules = _scheduleRepository.Count();
             var totalPages = (int)Math.Ceiling((double)totalSchedules / pageSize);
 
-            IEnumerable<Schedule> _schedules = _scheduleRepository
+            return _scheduleRepository
                 .AllIncluding(s => s.Creator, s => s.Attendees)
                 .OrderBy(s => s.Id)
                 .Skip((currentPage - 1) * currentPageSize)
                 .Take(currentPageSize)
                 .ToList();
 
-            Response.AddPagination(page, pageSize, totalSchedules, totalPages);
-
-            IEnumerable<ScheduleViewModel> _schedulesVM = Mapper.Map<IEnumerable<Schedule>, IEnumerable<ScheduleViewModel>>(_schedules);
-
-            return new OkObjectResult(_schedulesVM);
         }
 
         [HttpGet("{id}", Name = "GetSchedule")]
-        public IActionResult Get(int id)
+        public Schedule Get(int id)
         {
-            Schedule _schedule = _scheduleRepository
+            return _scheduleRepository
                 .GetSingle(s => s.Id == id, s => s.Creator, s => s.Attendees);
-
-            if (_schedule != null)
-            {
-                ScheduleViewModel _scheduleVM = Mapper.Map<Schedule, ScheduleViewModel>(_schedule);
-                return new OkObjectResult(_scheduleVM);
-            }
-            else
-            {
-                return NotFound();
-            }
         }
 
         [HttpGet("{id}/details", Name = "GetScheduleDetails")]
-        public IActionResult GetScheduleDetails(int id)
+        public Schedule GetScheduleDetails(int id)
         {
-            Schedule _schedule = _scheduleRepository
+            return _scheduleRepository
                 .GetSingle(s => s.Id == id, s => s.Creator, s => s.Attendees);
-
-            if (_schedule != null)
-            {
-
-
-                ScheduleDetailsViewModel _scheduleDetailsVM = Mapper.Map<Schedule, ScheduleDetailsViewModel>(_schedule);
-
-                foreach (var attendee in _schedule.Attendees)
-                {
-                    User _userDb = _userRepository.GetSingle(attendee.UserId);
-                    _scheduleDetailsVM.Attendees.Add(Mapper.Map<User, UserViewModel>(_userDb));
-                }
-
-
-                return new OkObjectResult(_scheduleDetailsVM);
-            }
-            else
-            {
-                return NotFound();
-            }
         }
 
         [HttpPost]
-        public IActionResult Create([FromBody]ScheduleViewModel schedule)
+        public Schedule Create([FromBody]Schedule schedule)
         {
             if (!ModelState.IsValid)
             {
-                return BadRequest(ModelState);
+                throw new Exception();
             }
 
-            Schedule _newSchedule = Mapper.Map<ScheduleViewModel, Schedule>(schedule);
-            _newSchedule.DateCreated = DateTime.Now;
+            schedule.DateCreated = DateTime.Now;
 
-            _scheduleRepository.Add(_newSchedule);
+            _scheduleRepository.Add(schedule);
             _scheduleRepository.Commit();
-
-            foreach (var userId in schedule.Attendees)
-            {
-                _newSchedule.Attendees.Add(new Attendee { UserId = userId });
-            }
-            _scheduleRepository.Commit();
-
-            schedule = Mapper.Map<Schedule, ScheduleViewModel>(_newSchedule);
-
-            CreatedAtRouteResult result = CreatedAtRoute("GetSchedule", new { controller = "Schedules", id = schedule.Id }, schedule);
-            return result;
+            return schedule;
         }
 
         [HttpPut("{id}")]
-        public IActionResult Put(int id, [FromBody]ScheduleViewModel schedule)
+        public Schedule Put(int id, [FromBody]Schedule schedule)
         {
             if (!ModelState.IsValid)
             {
-                return BadRequest(ModelState);
+                throw new Exception();
             }
 
-            Schedule _scheduleDb = _scheduleRepository.GetSingle(id);
+            Schedule scheduleDb = _scheduleRepository.GetSingle(id);
 
-            if (_scheduleDb == null)
+            if (scheduleDb == null)
             {
-                return NotFound();
+                throw new KeyNotFoundException();
             }
             else
             {
-                _scheduleDb.Title = schedule.Title;
-                _scheduleDb.Location = schedule.Location;
-                _scheduleDb.Description = schedule.Description;
-                _scheduleDb.Status = (ScheduleStatus)Enum.Parse(typeof(ScheduleStatus), schedule.Status);
-                _scheduleDb.Type = (ScheduleType)Enum.Parse(typeof(ScheduleType), schedule.Type);
-                _scheduleDb.TimeStart = schedule.TimeStart;
-                _scheduleDb.TimeEnd = schedule.TimeEnd;
+                scheduleDb.Title = schedule.Title;
+                scheduleDb.Location = schedule.Location;
+                scheduleDb.Description = schedule.Description;
+                scheduleDb.Status = schedule.Status;
+                scheduleDb.Type = schedule.Type;
+                scheduleDb.TimeStart = schedule.TimeStart;
+                scheduleDb.TimeEnd = schedule.TimeEnd;
 
                 // Remove current attendees
                 _attendeeRepository.DeleteWhere(a => a.ScheduleId == id);
 
-                foreach (var userId in schedule.Attendees)
+                foreach (var user in schedule.Attendees)
                 {
-                    _scheduleDb.Attendees.Add(new Attendee { ScheduleId = id, UserId = userId });
+                    scheduleDb.Attendees.Add(user);
                 }
 
                 _scheduleRepository.Commit();
             }
-
-            schedule = Mapper.Map<Schedule, ScheduleViewModel>(_scheduleDb);
-
-            return new NoContentResult();
+            return scheduleDb;
         }
 
         [HttpDelete("{id}", Name = "RemoveSchedule")]
