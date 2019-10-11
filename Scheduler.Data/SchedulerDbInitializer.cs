@@ -9,7 +9,7 @@ namespace Scheduler.Data
 {
     public class SchedulerDbInitializer
     {
-        private static SchedulerContext context;
+        // private static SchedulerContext context;
         public static void Initialize(IServiceProvider serviceProvider)
         {
             using (var serviceScope = serviceProvider.CreateScope())

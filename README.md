@@ -3,7 +3,7 @@
 ## Simplified by Chris Choi
 ### Removed 3rd party libraries, FluentValidation and Automapper
 ### TODO:
-- Update to ASP.NET Core 3.0
+- ~~Update to ASP.NET Core 3.0~~
 - Add UnitOfWork
 - Update error handling for model validation
 - Update readonly document to md stryle
